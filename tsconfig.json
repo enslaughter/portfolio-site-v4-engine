@@ -8,7 +8,9 @@
     "outDir": "dist",
     "rootDir": ".",
     "strict": true,
-    "lib": ["es2015"]
+    "lib": ["es2015"],
+    "allowJs": true,
+    "skipLibCheck": true
   },
   "exclude": ["node_modules", "dist"]
 }
