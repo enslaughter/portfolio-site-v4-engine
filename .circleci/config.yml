@@ -53,7 +53,7 @@ jobs:
 
       - gcp-cloud-run/deploy:
           image: ${GOOGLE_COMPUTE_REGION}-docker.pkg.dev/${GOOGLE_PROJECT_ID}/${AR_REPO}/<< pipeline.parameters.cloud_run_service_name >>:${CIRCLE_SHA1}
-          service_name: << pipeline.parameters.cloud_run_service_name >>
+          service-name: << pipeline.parameters.cloud_run_service_name >>
           region: ${GOOGLE_COMPUTE_REGION}
           platform: managed
           unauthenticated: true
