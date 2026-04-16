@@ -45,29 +45,31 @@ jobs:
       - run:
           name: Authenticate with GCP via OIDC
           command: |
-            # Write OIDC token without trailing newline
             printf '%s' "$CIRCLE_OIDC_TOKEN" > /tmp/oidc_token.txt
 
-            # Write credential config directly — bypasses gcloud's create-cred-config
-            # to guarantee the audience field uses the required //iam.googleapis.com/ prefix
-            AUDIENCE="//iam.googleapis.com/projects/${GOOGLE_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${WORKLOAD_IDENTITY_POOL_ID}/providers/${WORKLOAD_IDENTITY_POOL_PROVIDER_ID}"
-            SA_IMPERSONATION_URL="https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${SERVICE_ACCOUNT_EMAIL}:generateAccessToken"
-
-            cat > /tmp/gcp_cred_config.json << EOF
-            {
-              "type": "external_account",
-              "audience": "${AUDIENCE}",
-              "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
-              "token_url": "https://sts.googleapis.com/v1/token",
-              "credential_source": {
-                "file": "/tmp/oidc_token.txt",
-                "format": { "type": "text" }
+            python3 -c "
+            import os, json
+            config = {
+              'type': 'external_account',
+              'audience': '//iam.googleapis.com/projects/{}/locations/global/workloadIdentityPools/{}/providers/{}'.format(
+                os.environ['GOOGLE_PROJECT_NUMBER'],
+                os.environ['WORKLOAD_IDENTITY_POOL_ID'],
+                os.environ['WORKLOAD_IDENTITY_POOL_PROVIDER_ID']
+              ),
+              'subject_token_type': 'urn:ietf:params:oauth:token-type:id_token',
+              'token_url': 'https://sts.googleapis.com/v1/token',
+              'credential_source': {
+                'file': '/tmp/oidc_token.txt',
+                'format': {'type': 'text'}
               },
-              "service_account_impersonation_url": "${SA_IMPERSONATION_URL}"
+              'service_account_impersonation_url': 'https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/{}:generateAccessToken'.format(
+                os.environ['SERVICE_ACCOUNT_EMAIL']
+              )
             }
-            EOF
-
-            echo "=== Credential config audience ===" && grep audience /tmp/gcp_cred_config.json
+            with open('/tmp/gcp_cred_config.json', 'w') as f:
+              json.dump(config, f, indent=2)
+            print('audience:', config['audience'])
+            "
 
             gcloud auth login --cred-file=/tmp/gcp_cred_config.json --brief --quiet
             gcloud config set project "${GOOGLE_PROJECT_ID}"
