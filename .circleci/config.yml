@@ -2,7 +2,6 @@ version: 2.1
 
 orbs:
   gcp-cli: circleci/gcp-cli@3.2.2
-  gcp-cloud-run: circleci/gcp-cloud-run@1.0.2
 
 parameters:
   cloud_run_service_name:
@@ -77,16 +76,24 @@ jobs:
             gcloud config set project "${GOOGLE_PROJECT_ID}"
             echo "export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_cred_config.json" >> "$BASH_ENV"
 
-      - gcp-cloud-run/build:
-          tag: ${GOOGLE_COMPUTE_REGION}-docker.pkg.dev/${GOOGLE_PROJECT_ID}/${AR_REPO}/<< pipeline.parameters.cloud_run_service_name >>:${CIRCLE_SHA1}
-          additional_args: --project=${GOOGLE_PROJECT_ID}
+      - run:
+          name: Build and push image via Cloud Build
+          command: |
+            IMAGE_URI="${GOOGLE_COMPUTE_REGION}-docker.pkg.dev/${GOOGLE_PROJECT_ID}/${AR_REPO}/<< pipeline.parameters.cloud_run_service_name >>:${CIRCLE_SHA1}"
+            gcloud builds submit \
+              --tag="$IMAGE_URI" \
+              --project="${GOOGLE_PROJECT_ID}"
 
-      - gcp-cloud-run/deploy:
-          image: ${GOOGLE_COMPUTE_REGION}-docker.pkg.dev/${GOOGLE_PROJECT_ID}/${AR_REPO}/<< pipeline.parameters.cloud_run_service_name >>:${CIRCLE_SHA1}
-          service-name: << pipeline.parameters.cloud_run_service_name >>
-          region: ${GOOGLE_COMPUTE_REGION}
-          platform: managed
-          unauthenticated: true
+      - run:
+          name: Deploy to Cloud Run
+          command: |
+            IMAGE_URI="${GOOGLE_COMPUTE_REGION}-docker.pkg.dev/${GOOGLE_PROJECT_ID}/${AR_REPO}/<< pipeline.parameters.cloud_run_service_name >>:${CIRCLE_SHA1}"
+            gcloud run deploy "<< pipeline.parameters.cloud_run_service_name >>" \
+              --image="$IMAGE_URI" \
+              --region="${GOOGLE_COMPUTE_REGION}" \
+              --platform=managed \
+              --allow-unauthenticated \
+              --project="${GOOGLE_PROJECT_ID}"
 
 workflows:
   ci-cd:
