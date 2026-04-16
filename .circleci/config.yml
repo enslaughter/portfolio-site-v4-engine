@@ -6,7 +6,7 @@ orbs:
 parameters:
   cloud_run_service_name:
     type: string
-    default: "websocket-service"
+    default: "ens--portfolio-v4-engine"
 
 jobs:
   build-and-test:
