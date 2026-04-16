@@ -40,14 +40,21 @@ jobs:
     steps:
       - checkout
 
-      - gcp-cli/setup:
-          use_oidc: true
-          google_project_id: GOOGLE_PROJECT_ID
-          google_compute_region: GOOGLE_COMPUTE_REGION
-          google_project_number: GOOGLE_PROJECT_NUMBER
-          workload_identity_pool_id: WORKLOAD_IDENTITY_POOL_ID
-          workload_identity_pool_provider_id: WORKLOAD_IDENTITY_POOL_PROVIDER_ID
-          service_account_email: SERVICE_ACCOUNT_EMAIL
+      - gcp-cli/install
+
+      - run:
+          name: Authenticate with GCP via OIDC
+          command: |
+            echo "$CIRCLE_OIDC_TOKEN" > /tmp/oidc_token.txt
+            gcloud iam workload-identity-pools create-cred-config \
+              "//iam.googleapis.com/projects/${GOOGLE_PROJECT_NUMBER}/locations/global/workloadIdentityPools/${WORKLOAD_IDENTITY_POOL_ID}/providers/${WORKLOAD_IDENTITY_POOL_PROVIDER_ID}" \
+              --service-account="${SERVICE_ACCOUNT_EMAIL}" \
+              --credential-source-file=/tmp/oidc_token.txt \
+              --credential-source-type=text \
+              --output-file=/tmp/gcp_cred_config.json
+            gcloud auth login --cred-file=/tmp/gcp_cred_config.json --brief --quiet
+            gcloud config set project "${GOOGLE_PROJECT_ID}"
+            echo "export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_cred_config.json" >> "$BASH_ENV"
 
       - gcp-cloud-run/build:
           tag: ${GOOGLE_COMPUTE_REGION}-docker.pkg.dev/${GOOGLE_PROJECT_ID}/${AR_REPO}/<< pipeline.parameters.cloud_run_service_name >>:${CIRCLE_SHA1}
