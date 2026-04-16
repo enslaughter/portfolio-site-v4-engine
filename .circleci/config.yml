@@ -69,6 +69,8 @@ jobs:
             with open('/tmp/gcp_cred_config.json', 'w') as f:
               json.dump(config, f, indent=2)
             print('audience:', config['audience'])
+            pn = os.environ['GOOGLE_PROJECT_NUMBER']
+            print('project_number: length={}, is_numeric={}'.format(len(pn), pn.isdigit()))
             "
 
             gcloud auth login --cred-file=/tmp/gcp_cred_config.json --brief --quiet
@@ -77,6 +79,7 @@ jobs:
 
       - gcp-cloud-run/build:
           tag: ${GOOGLE_COMPUTE_REGION}-docker.pkg.dev/${GOOGLE_PROJECT_ID}/${AR_REPO}/<< pipeline.parameters.cloud_run_service_name >>:${CIRCLE_SHA1}
+          additional_args: --project=${GOOGLE_PROJECT_ID}
 
       - gcp-cloud-run/deploy:
           image: ${GOOGLE_COMPUTE_REGION}-docker.pkg.dev/${GOOGLE_PROJECT_ID}/${AR_REPO}/<< pipeline.parameters.cloud_run_service_name >>:${CIRCLE_SHA1}
