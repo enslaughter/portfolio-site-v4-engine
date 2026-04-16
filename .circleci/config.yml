@@ -29,10 +29,11 @@ jobs:
       - run:
           name: Build TypeScript
           command: npm run build
-      - run:
-          name: Run tests
-          command: npm test
-          
+      # No Tests written yet, so leave this out
+      # - run:
+      #     name: Run tests
+      #     command: npm test
+
   build-push-deploy:
     docker:
       - image: cimg/base:stable
