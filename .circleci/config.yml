@@ -73,7 +73,7 @@ jobs:
             "
 
             gcloud auth login --cred-file=/tmp/gcp_cred_config.json --brief --quiet
-            gcloud config set project "${GOOGLE_PROJECT_ID}"
+            gcloud config set project "${GOOGLE_PROJECT_ID}" --quiet
             echo "export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp_cred_config.json" >> "$BASH_ENV"
 
       - run:
