@@ -67,9 +67,6 @@ jobs:
             }
             with open('/tmp/gcp_cred_config.json', 'w') as f:
               json.dump(config, f, indent=2)
-            print('audience:', config['audience'])
-            pn = os.environ['GOOGLE_PROJECT_NUMBER']
-            print('project_number: length={}, is_numeric={}'.format(len(pn), pn.isdigit()))
             "
 
             gcloud auth login --cred-file=/tmp/gcp_cred_config.json --brief --quiet
@@ -80,13 +77,9 @@ jobs:
           name: Build and push image via Cloud Build
           command: |
             IMAGE_URI="${GOOGLE_COMPUTE_REGION}-docker.pkg.dev/${GOOGLE_PROJECT_ID}/${AR_REPO}/<< pipeline.parameters.cloud_run_service_name >>:${CIRCLE_SHA1}"
-            echo "IMAGE_URI: $IMAGE_URI"
-            echo "Active account: $(gcloud auth list --filter=status:ACTIVE --format='value(account)')"
-            echo "Active project: $(gcloud config get-value project)"
             gcloud builds submit \
               --tag="$IMAGE_URI" \
-              --project="${GOOGLE_PROJECT_ID}" \
-              2>&1
+              --project="${GOOGLE_PROJECT_ID}"
 
       - run:
           name: Deploy to Cloud Run
