@@ -80,9 +80,13 @@ jobs:
           name: Build and push image via Cloud Build
           command: |
             IMAGE_URI="${GOOGLE_COMPUTE_REGION}-docker.pkg.dev/${GOOGLE_PROJECT_ID}/${AR_REPO}/<< pipeline.parameters.cloud_run_service_name >>:${CIRCLE_SHA1}"
+            echo "IMAGE_URI: $IMAGE_URI"
+            echo "Active account: $(gcloud auth list --filter=status:ACTIVE --format='value(account)')"
+            echo "Active project: $(gcloud config get-value project)"
             gcloud builds submit \
               --tag="$IMAGE_URI" \
-              --project="${GOOGLE_PROJECT_ID}"
+              --project="${GOOGLE_PROJECT_ID}" \
+              2>&1
 
       - run:
           name: Deploy to Cloud Run
