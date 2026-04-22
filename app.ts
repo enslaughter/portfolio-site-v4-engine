@@ -12,6 +12,13 @@ app.get('/healthz', (_req, res) => {
     res.status(200).send('ok');
 });
 
+// Any request that reaches here means the upgrade event did NOT fire.
+// Logs headers so we can see what Cloud Run is actually forwarding.
+app.use((req, _res, next) => {
+    console.debug(`[HTTP] ${req.method} ${req.url} upgrade=${req.headers['upgrade'] ?? 'none'} connection=${req.headers['connection'] ?? 'none'}`);
+    next();
+});
+
 const server = createServer(app);
 const wss = new WebSocketServer({ noServer: true });
 
