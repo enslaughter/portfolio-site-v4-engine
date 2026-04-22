@@ -90,6 +90,7 @@ jobs:
               --region="${GOOGLE_COMPUTE_REGION}" \
               --platform=managed \
               --allow-unauthenticated \
+              --ingress=all \
               --set-env-vars="JWKS_URI=${JWKS_URI},JWT_ISSUER=${JWT_ISSUER},JWT_AUDIENCE=${JWT_AUDIENCE}" \
               --project="${GOOGLE_PROJECT_ID}"
 
