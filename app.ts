@@ -8,14 +8,28 @@ import { verifyToken } from './auth.js';
 const app = express();
 const PORT = 8080;
 
+app.get('/healthz', (_req, res) => {
+    res.status(200).send('ok');
+});
+
 const server = createServer(app);
 const wss = new WebSocketServer({ noServer: true });
 
 wss.on('connection', setupWSConnection);
 
 server.on('upgrade', async (request: IncomingMessage, socket, head) => {
-    const url = new URL(request.url!, `http://${request.headers.host}`);
-    const token = url.searchParams.get('token');
+    console.debug(`[WS] Upgrade request received from ${request.socket.remoteAddress} — url: ${request.url}`);
+
+    let token: string | null = null;
+    try {
+        const url = new URL(request.url!, `http://${request.headers.host}`);
+        token = url.searchParams.get('token');
+    } catch (err) {
+        console.debug(`[WS] Failed to parse URL: ${(err as Error).message}`);
+        socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
+        socket.destroy();
+        return;
+    }
 
     if (!token) {
         console.debug(`[WS] Rejected upgrade from ${request.socket.remoteAddress} — no token provided`);
